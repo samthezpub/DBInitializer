@@ -1,19 +1,20 @@
 package com.example.demo;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Properties;
 
 @Slf4j
 public class DBInitializer{
-    public DBInitializer(){
+
+    private Connection connection;
+    private DBInitializer() {
         init();
     }
 
@@ -33,7 +34,7 @@ public class DBInitializer{
         }
 
         try {
-            Connection conn = DriverManager.getConnection(
+            this.connection = DriverManager.getConnection(
                     properties.getProperty("spring.datasource.url"),
                     properties.getProperty("spring.datasource.username"),
                     properties.getProperty("spring.datasource.password")
@@ -42,4 +43,25 @@ public class DBInitializer{
             log.error("Не удалось получить доступ к базе данных");
         }
     }
+
+    public ResultSet selectAllUsers(){
+        final String SQL = "SELECT * FROM users";
+
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(SQL);
+            return preparedStatement.executeQuery();
+        } catch (SQLException e) {
+            log.error("Ошибка получения данных из таблицы user");
+            throw new Error(e.getMessage());
+        }
+    }
+
+    public void close(){
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            log.error("Не удалось закрыть подключение к базе данных!");
+        }
+    }
+
 }
